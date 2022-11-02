@@ -5,16 +5,25 @@
             aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+        <div class="collapse navbar-collapse justify-content-between" id="navbarNavAltMarkup">
             <div class="navbar-nav">
                 <a class="nav-item nav-link" href="/urls">My URLs</a>
                 <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
             </div>
-            <div class="navbar-nav">
-                <form class="form-inline justify-content-center" action="/urls/<%= id %>" method="POST">
-                    <input name="username" placeholder="Username" />
-                    <button type="submit" class="btn btn-dark">Login</button>
-                </form>
+            <div class="navbar-nav align-self-center">
+                <% if (username) { %>
+                    <a class="align-self-center mr-3">
+                        Logged in as: <%= username %>!
+                    </a>
+                    <form class="form-inline" action="/logout" method="POST">
+                        <button type="submit" class="btn btn-outline-dark">Logout</button>
+                    </form>
+                    <% } else { %>
+                        <form class="form-inline" action="/login" method="POST">
+                            <input class="mr-3 form-control" name="username" placeholder="Username" />
+                            <button type="submit" class="btn btn-outline-dark">Login</button>
+                        </form>
+                        <% } %>
             </div>
         </div>
     </nav>
