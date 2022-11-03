@@ -24,19 +24,37 @@ const urlDatabase = {
 
 const users = {};
 
+function isEmailValid(email) {
+    for (let user in users) {
+        if (users[user]["email"] === email) {
+            return true;
+        }
+    }
+    return false;
+};
+
 app.get("/register", (req, res) => {
     res.render("register");
 });
 
 app.post("/register", (req, res) => {
     const userID = generateRandomString();
+
+    if (!req.body["email"] || !req.body["password"]) {
+        return res.send("400 email or password is empty");
+    }
+
+    if (isEmailValid(req.body["email"])) {
+        return res.send("400 email already used in another account")
+    }
+
     users[userID] = {
         id: userID,
         email: req.body["email"],
         password: req.body["password"]
     }
-    console.log(users);
-    res.cookie("user_id", userID)
+
+    res.cookie("user_id", userID);
     res.redirect("/urls");
 })
 
