@@ -3,7 +3,7 @@ const app = express();
 const PORT = 8080;
 const cookieParser = require('cookie-parser');
 const e = require("express");
-const { generateRandomString, addUser, getUserByEmail, getUserByPass, getUserById, } = require("./helper_functions")
+const { generateRandomString, addUser, getUserByEmail, getUserByPass, getUserById, urlsForUser } = require("./helper_functions")
 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
@@ -26,7 +26,7 @@ const users = {};
 app.get("/register", (req, res) => {
     const user = users[req.cookies.user_id];
     const templateVars = { user };
-    if (templateVars.user) {
+    if (user) {
         return res.redirect("/urls");
     }
     res.render("register", templateVars);
@@ -51,7 +51,7 @@ app.post("/register", (req, res) => {
 app.get("/login", (req, res) => {
     const user = users[req.cookies.user_id];
     const templateVars = { user };
-    if (templateVars.user) {
+    if (user) {
         return res.redirect("/urls");
     }
     res.render("login", templateVars);
@@ -73,10 +73,11 @@ app.get("/urls", (req, res) => {
     const user = users[req.cookies.user_id];
     const templateVars = {
         user: user,
-        urls: urlDatabase,
+        urls: urlsForUser(urlDatabase, req.cookies.user_id),
+        message: "Please log in first."
     };
-    if(!templateVars.user) {
-        return res.redirect("/login")
+    if(!user) {
+        return res.render("urls_error", templateVars)
     }
     res.render("urls_index", templateVars);
 });
@@ -93,14 +94,14 @@ app.post("/urls", (req, res) => {
         longURL: req.body["longURL"],
         userID: req.cookies["user_id"]
      };
-     console.log(urlDatabase)
+    console.log(urlDatabase)
     res.redirect(`/urls/${newId}`);
 })
 
 app.get("/urls/new", (req, res) => {
     const user = users[req.cookies.user_id];
     const templateVars = { user };
-    if(!templateVars.user) {
+    if(!user) {
         return res.redirect("/login")
     }
     res.render("urls_new", templateVars);
@@ -108,15 +109,35 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:id", (req, res) => {
     const user = users[req.cookies.user_id];
-    const templateVars = {
+    let templateVars = {
         user: user,
         id: req.params.id, 
         longURL: urlDatabase[req.params.id]["longURL"]
-    };
+    }
+    if(!user) {
+        let templateVars = { message: "Please log in first." }
+        return res.render("urls_error", templateVars);
+    }
+    if(urlDatabase[templateVars.id]["userID"] !== req.cookies.user_id) {
+        let templateVars = { message: "This URL does not belong to you." }
+        return res.render("urls_error", templateVars);
+    }
     res.render("urls_show", templateVars);
 });
 
 app.post("/urls/:id", (req, res) => {
+    if (!urlDatabase[req.params.id]) {
+        let templateVars = { message: "This URL does not exist" };
+        return res.render("urls_error", templateVars);
+    }
+    if(!req.cookies.user_id) {
+        let templateVars = { message: "Please login first" };
+        return res.status(400).render("urls_error", templateVars);
+    }
+    if(urlDatabase[req.params.id]["userID"] !== req.cookies.user_id) {
+        let templateVars = { message: "This URL does not belong to you" };
+        return res.status(400).render("urls_error", templateVars);
+    }
     urlDatabase[req.params.id]["longURL"] = req.body["longURL"]
     res.redirect("/urls");
 });
@@ -135,6 +156,18 @@ app.get("/u/:id", (req, res) => {
 
 app.post("/urls/:id/delete", (req, res) => {
     const id = req.params.id;
+    if (!urlDatabase[id]) {
+        let templateVars = { message: "This URL does not exist" };
+        return res.render("urls_error", templateVars);
+    }
+    if(!req.cookies.user_id) {
+        let templateVars = { message: "Please login first" };
+        return res.status(400).render("urls_error", templateVars);
+    }
+    if(urlDatabase[req.params.id]["userID"] !== req.cookies.user_id) {
+        let templateVars = { message: "This URL does not belong to you" };
+        return res.status(400).render("urls_error", templateVars);
+    }
     delete urlDatabase[id];
     res.redirect("/urls");
 })

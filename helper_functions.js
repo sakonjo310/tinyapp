@@ -45,11 +45,23 @@ function getUserById(users, email) {
     return false;
 };
 
+function urlsForUser(database, id) {
+    let customObj = {};
+    let ids = Object.keys(database)
+    for (let item of ids) {
+        if (database[item]["userID"] === id) {
+            customObj[item] = database[item];
+        }
+    }
+    return customObj;
+}
+
 
 module.exports = {
     generateRandomString,
     addUser,
     getUserByEmail,
     getUserByPass,
-    getUserById
+    getUserById,
+    urlsForUser
 }
