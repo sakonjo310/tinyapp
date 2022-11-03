@@ -19,10 +19,8 @@
                         <button type="submit" class="btn btn-outline-dark">Logout</button>
                     </form>
                     <% } else { %>
-                        <form class="form-inline" action="/login" method="POST">
-                            <input class="mr-3 form-control" name="username" placeholder="Username" />
-                            <button type="submit" class="btn btn-outline-dark">Login</button>
-                        </form>
+                        <button type="submit" class="btn btn-light mr-3"><a href="/register">Register</a></button>
+                        <button type="submit" class="btn btn-light"><a href="/login">Login</a></button>
                         <% } %>
             </div>
         </div>

@@ -56,6 +56,10 @@ app.post("/register", (req, res) => {
 
     res.cookie("user_id", userID);
     res.redirect("/urls");
+});
+
+app.get("/login", (req, res) => {
+    res.render("login");
 })
 
 app.post("/login", (req, res) => {
