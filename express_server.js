@@ -2,20 +2,13 @@ const express = require("express");
 const app = express();
 const PORT = 8080;
 const cookieParser = require('cookie-parser');
+const e = require("express");
+const { generateRandomString, addUser, getUserByEmail, getUserByPass, getUserById } = require("./helper_functions")
+
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 
 app.use(cookieParser());
-
-function generateRandomString() {
-    const characters ='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    const charactersLength = characters.length;
-    for ( let i = 0; i < 6; i++ ) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-    }
-    return result;
-};
 
 const urlDatabase = {
     "b2xVn2": "http://www.lighthouselabs.ca",
@@ -24,46 +17,43 @@ const urlDatabase = {
 
 const users = {};
 
-function isEmailValid(email) {
-    for (let user in users) {
-        if (users[user]["email"] === email) {
-            return true;
-        }
-    }
-    return false;
-};
-
 app.get("/register", (req, res) => {
-    res.render("register");
+    const user = users[req.cookies.user_id];
+    const templateVars = { user };
+    res.render("register", templateVars);
 });
 
 app.post("/register", (req, res) => {
-    const userID = generateRandomString();
+    const email = req.body["email"];
+    const password = req.body["password"];
 
-    if (!req.body["email"] || !req.body["password"]) {
-        return res.send("400 email or password is empty");
+    if (!email || !password) {
+        return res.status(400).send("email or password is empty");
     }
 
-    if (isEmailValid(req.body["email"])) {
-        return res.send("400 email already used in another account")
+    if (getUserByEmail(users, email)) {
+        return res.status(400).send("email already used in another account")
     }
 
-    users[userID] = {
-        id: userID,
-        email: req.body["email"],
-        password: req.body["password"]
-    }
-
-    res.cookie("user_id", userID);
+    res.cookie("user_id", addUser(users, email, password));
     res.redirect("/urls");
 });
 
 app.get("/login", (req, res) => {
-    res.render("login");
+    const user = users[req.cookies.user_id];
+    const templateVars = { user };
+    res.render("login", templateVars);
 })
 
 app.post("/login", (req, res) => {
-    res.cookie("username", req.body["username"]);
+    if (!getUserByEmail(users, req.body["email"])) {
+        return res.status(403).send("email not found");
+    }
+
+    if (!getUserByPass(users, req.body["password"])) {
+        return res.status(403).send("incorrect password");
+    }
+    res.cookie("user_id", getUserById(users, req.body["email"]));
     res.redirect("/urls");
 });
 
@@ -116,8 +106,9 @@ app.post("/urls/:id/delete", (req, res) => {
 })
 
 app.post("/logout", (req, res) => {
-    res.clearCookie("username");
-    res.redirect("/urls");
+    console.log(users);
+    res.clearCookie("user_id");
+    res.redirect("login");
 })
 
 app.get("/", (req, res) => {
