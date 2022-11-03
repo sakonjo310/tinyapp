@@ -25,17 +25,18 @@ const urlDatabase = {
 const users = {};
 
 app.get("/register", (req, res) => {
-    res.render("/register");
+    res.render("register");
 });
 
 app.post("/register", (req, res) => {
     const userID = generateRandomString();
-    users.userID = {
+    users[userID] = {
         id: userID,
         email: req.body["email"],
         password: req.body["password"]
     }
     console.log(users);
+    res.cookie("user_id", userID)
     res.redirect("/urls");
 })
 
@@ -45,8 +46,9 @@ app.post("/login", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
+    const user = users[req.cookies.user_id];
     const templateVars = {
-        username: req.cookies["username"],
+        user: user,
         urls: urlDatabase,
     };
     res.render("urls_index", templateVars);
@@ -59,13 +61,15 @@ app.post("/urls", (req, res) => {
 })
 
 app.get("/urls/new", (req, res) => {
-    const templateVars = { username: req.cookies["username"] };
+    const user = users[req.cookies.user_id];
+    const templateVars = { user };
     res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {
+    const user = users[req.cookies.user_id];
     const templateVars = {
-        username: req.cookies["username"],
+        user: user,
         id: req.params.id, 
         longURL: urlDatabase[req.params.id] 
     };
