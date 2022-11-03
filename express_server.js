@@ -1,8 +1,8 @@
+/// SETUP
 const cookieSession = require('cookie-session')
 const express = require("express");
 const app = express();
 const PORT = 8080;
-
 const { generateRandomString, addUser, getUserByEmail, getUserByPass, getUserById, urlsForUser } = require("./helper_functions")
 const bcrypt = require("bcryptjs");
 
@@ -15,28 +15,21 @@ app.use(cookieSession({
 }));
 
 /// DATABASE
-const urlDatabase = {
-    b6UTxQ: {
-        longURL: "https://www.tsn.ca",
-        userID: "aJ48lW",
-      },
-      i3BoGr: {
-        longURL: "https://www.google.ca",
-        userID: "aJ48lW",
-      },
-};
-
+const urlDatabase = {};
 const users = {};
 
+/// *****ROUTES*****
 
 /// REGISTER
 app.get("/register", (req, res) => {
     const user = users[req.session.user_id];
     const templateVars = { user };
+
     if (user) {
         return res.redirect("/urls");
     }
-    res.render("register", templateVars);
+
+    return res.render("register", templateVars);
 });
 
 app.post("/register", (req, res) => {
@@ -44,42 +37,51 @@ app.post("/register", (req, res) => {
     const password = req.body["password"];
 
     if (!email || !password) {
-        return res.status(400).send("email or password is empty");
+        let templateVars = { message: "email or password is empty" };
+        return res.status(400).render("urls_error", templateVars);
     }
 
     if (getUserByEmail(users, email)) {
-        return res.status(400).send("email already used in another account")
+        let templateVars = { message: "email already used in another account" };
+        return res.status(400).render("urls_error", templateVars);
     }
 
-    // res.cookie("user_id", addUser(users, email, password));
-    req.session.user_id = addUser(users, email, password);
-    res.redirect("/urls");
+    const userID = addUser(users, email, password);
+    req.session.user_id = userID;
+    return res.redirect("/urls");
 });
 
+/// LOGIN
 app.get("/login", (req, res) => {
     const user = users[req.session.user_id];
     const templateVars = { user };
+
     if (user) {
         return res.redirect("/urls");
     }
-    res.render("login", templateVars);
+
+    return res.render("login", templateVars);
 })
 
 app.post("/login", (req, res) => {
     const email = req.body["email"];
     const password = req.body["password"];
+
     if (!getUserByEmail(users, email)) {
-        return res.status(403).send("email not found");
+        let templateVars = { message: "email not found" };
+        return res.status(403).render("urls_error", templateVars);
     }
 
     if (!getUserByPass(users, password)) {
-        return res.status(403).send("incorrect password");
+        let templateVars = { message: "incorrect password" };
+        return res.status(403).render("urls_error", templateVars);
     }
-    // res.cookie("user_id", getUserById(users, req.body["email"]));
+
     req.session.user_id = getUserById(users, req.body["email"]);
-    res.redirect("/urls");
+    return res.redirect("/urls");
 });
 
+/// URLS
 app.get("/urls", (req, res) => {
     const user = users[req.session.user_id];
     const templateVars = {
@@ -87,36 +89,41 @@ app.get("/urls", (req, res) => {
         urls: urlsForUser(urlDatabase, req.session.user_id),
         message: "Please log in first."
     };
+
     if(!user) {
-        return res.render("urls_error", templateVars)
+        return res.status(400).render("urls_error", templateVars);
     }
-    res.render("urls_index", templateVars);
+
+    return res.render("urls_index", templateVars);
 });
 
 app.post("/urls", (req, res) => {
     if(!req.session.user_id) {
-        let templateVars = {
-            message: "Please log in first."
-        }
-        return res.render("urls_error", templateVars)
+        let templateVars = { message: "Please log in first." };
+        return res.status(400).render("urls_error", templateVars);
     }
+
     const newId = generateRandomString();
     urlDatabase[newId] = { 
         longURL: req.body["longURL"],
         userID: req.session.user_id
      };
-    res.redirect(`/urls/${newId}`);
-})
+    return res.redirect(`/urls/${newId}`);
+});
 
+/// URLS/NEW
 app.get("/urls/new", (req, res) => {
     const user = users[req.session.user_id];
     const templateVars = { user };
+
     if(!user) {
-        return res.redirect("/login")
+        return res.redirect("/login");
     }
-    res.render("urls_new", templateVars);
+
+    return res.render("urls_new", templateVars);
 });
 
+/// URLS/:ID
 app.get("/urls/:id", (req, res) => {
     const user = users[req.session.user_id];
     let templateVars = {
@@ -124,79 +131,95 @@ app.get("/urls/:id", (req, res) => {
         id: req.params.id, 
         longURL: urlDatabase[req.params.id]["longURL"]
     }
+
     if(!user) {
         let templateVars = { message: "Please log in first." }
-        return res.render("urls_error", templateVars);
+        return res.status(400).render("urls_error", templateVars);
     }
+
     if(urlDatabase[templateVars.id]["userID"] !== req.session.user_id) {
         let templateVars = { message: "This URL does not belong to you." }
-        return res.render("urls_error", templateVars);
+        return res.status(401).render("urls_error", templateVars);
     }
-    res.render("urls_show", templateVars);
+
+    return res.render("urls_show", templateVars);
 });
 
 app.post("/urls/:id", (req, res) => {
     if (!urlDatabase[req.params.id]) {
         let templateVars = { message: "This URL does not exist" };
-        return res.render("urls_error", templateVars);
+        return res.status(404).render("urls_error", templateVars);
     }
+
     if(!req.session.user_id) {
         let templateVars = { message: "Please login first" };
-        return res.status(400).render("urls_error", templateVars);
+        return res.status(400).status(400).render("urls_error", templateVars);
     }
+
     if(urlDatabase[req.params.id]["userID"] !== req.session.user_id) {
         let templateVars = { message: "This URL does not belong to you" };
-        return res.status(400).render("urls_error", templateVars);
+        return res.status(401).status(400).render("urls_error", templateVars);
     }
-    urlDatabase[req.params.id]["longURL"] = req.body["longURL"]
-    res.redirect("/urls");
+
+    urlDatabase[req.params.id]["longURL"] = req.body["longURL"];
+    return res.redirect("/urls");
 });
 
+/// U/:ID
 app.get("/u/:id", (req, res) => {
     const id = req.params.id;
     const longURL = urlDatabase[id]["longURL"];
+
     if(!longURL) {
         let templateVars = {
             message: "This short URL does not exist."
         }
-        return res.render("urls_error", templateVars)
+        return res.status(404).render("urls_error", templateVars);
     }
-    res.redirect(longURL);
+
+    return res.redirect(longURL);
 });
 
+/// URLS/:ID/DELETE
 app.post("/urls/:id/delete", (req, res) => {
     const id = req.params.id;
+
     if (!urlDatabase[id]) {
         let templateVars = { message: "This URL does not exist" };
-        return res.render("urls_error", templateVars);
+        return res.status(404).render("urls_error", templateVars);
     }
+
     if(!req.session.user_id) {
         let templateVars = { message: "Please login first" };
         return res.status(400).render("urls_error", templateVars);
     }
+
     if(urlDatabase[req.params.id]["userID"] !== req.session.user_id) {
         let templateVars = { message: "This URL does not belong to you" };
-        return res.status(400).render("urls_error", templateVars);
+        return res.status(401).render("urls_error", templateVars);
     }
-    delete urlDatabase[id];
-    res.redirect("/urls");
-})
 
+    delete urlDatabase[id];
+    return res.redirect("/urls");
+});
+
+/// LOGOUT
 app.post("/logout", (req, res) => {
     req.session = null;
-    res.redirect("login");
-})
+    return res.redirect("login");
+});
 
+/// OTHER
 app.get("/", (req, res) => {
-    res.send("Hello!");
+    return res.send("Hello!");
 });
 
 app.get("/urls.json", (req, res) => {
-    res.json(urlDatabase);
+    return res.json(urlDatabase);
 });
 
 app.get("/hello", (req, res) => {
-    res.send("<html><body>Hello <b>World</b></body></html>\n");
+    return res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
 app.listen(PORT, () => {
