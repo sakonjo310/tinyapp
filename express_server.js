@@ -22,10 +22,27 @@ const urlDatabase = {
     "9sm5xK": "http://www.google.com"
 };
 
+const users = {};
+
+app.get("/register", (req, res) => {
+    res.render("/register");
+});
+
+app.post("/register", (req, res) => {
+    const userID = generateRandomString();
+    users.userID = {
+        id: userID,
+        email: req.body["email"],
+        password: req.body["password"]
+    }
+    console.log(users);
+    res.redirect("/urls");
+})
+
 app.post("/login", (req, res) => {
     res.cookie("username", req.body["username"]);
     res.redirect("/urls");
-})
+});
 
 app.get("/urls", (req, res) => {
     const templateVars = {
