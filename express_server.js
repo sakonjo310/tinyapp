@@ -2,8 +2,8 @@ const express = require("express");
 const app = express();
 const PORT = 8080;
 const cookieParser = require('cookie-parser');
-const e = require("express");
 const { generateRandomString, addUser, getUserByEmail, getUserByPass, getUserById, urlsForUser } = require("./helper_functions")
+const bcrypt = require("bcryptjs");
 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
@@ -58,11 +58,13 @@ app.get("/login", (req, res) => {
 })
 
 app.post("/login", (req, res) => {
-    if (!getUserByEmail(users, req.body["email"])) {
+    const email = req.body["email"];
+    const password = req.body["password"];
+    if (!getUserByEmail(users, email)) {
         return res.status(403).send("email not found");
     }
 
-    if (!getUserByPass(users, req.body["password"])) {
+    if (!getUserByPass(users, password)) {
         return res.status(403).send("incorrect password");
     }
     res.cookie("user_id", getUserById(users, req.body["email"]));
@@ -94,7 +96,6 @@ app.post("/urls", (req, res) => {
         longURL: req.body["longURL"],
         userID: req.cookies["user_id"]
      };
-    console.log(urlDatabase)
     res.redirect(`/urls/${newId}`);
 })
 
@@ -173,7 +174,6 @@ app.post("/urls/:id/delete", (req, res) => {
 })
 
 app.post("/logout", (req, res) => {
-    console.log(users);
     res.clearCookie("user_id");
     res.redirect("login");
 })

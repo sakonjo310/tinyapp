@@ -1,3 +1,5 @@
+const bcrypt = require('bcryptjs');
+
 function generateRandomString() {
     const characters ='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let result = '';
@@ -10,10 +12,11 @@ function generateRandomString() {
 
 function addUser(usersDatabase, email, password) {
     const userID = generateRandomString();
+    const hashedPassword = bcrypt.hashSync(password, 10);
     usersDatabase[userID] = {
         id: userID,
         email,
-        password
+        password: hashedPassword
     }
     return userID;
 }
@@ -21,15 +24,14 @@ function addUser(usersDatabase, email, password) {
 function getUserByEmail(users, email) {
     for (let user in users) {
         if (users[user]["email"] === email) {
-            return true;
+            return user;
         }
     }
-    return false;
 };
 
 function getUserByPass(users, password) {
     for (let user in users) {
-        if (users[user]["password"] === password) {
+        if (bcrypt.compareSync(password, users[user]["password"])) {
             return true;
         }
     }
