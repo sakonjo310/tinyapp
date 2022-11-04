@@ -209,19 +209,7 @@ app.post("/logout", (req, res) => {
     return res.redirect("login");
 });
 
-/// OTHER
-app.get("/", (req, res) => {
-    return res.send("Hello!");
-});
-
-app.get("/urls.json", (req, res) => {
-    return res.json(urlDatabase);
-});
-
-app.get("/hello", (req, res) => {
-    return res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
-
+/// SERVER
 app.listen(PORT, () => {
     console.log(`Example app listening on port ${PORT}`);
 });

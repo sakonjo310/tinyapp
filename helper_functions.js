@@ -19,7 +19,7 @@ function addUser(usersDatabase, email, password) {
         password: hashedPassword
     }
     return userID;
-}
+};
 
 function getUserByEmail(users, email) {
     for (let user in users) {
@@ -56,7 +56,7 @@ function urlsForUser(database, id) {
         }
     }
     return customObj;
-}
+};
 
 
 module.exports = {
