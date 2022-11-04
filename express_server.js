@@ -1,10 +1,11 @@
 /// SETUP
 const cookieSession = require('cookie-session')
 const express = require("express");
+const bcrypt = require("bcryptjs");
+
 const app = express();
 const PORT = 8080;
 const { generateRandomString, addUser, getUserByEmail, getUserByPass, getUserById, urlsForUser } = require("./helper_functions")
-const bcrypt = require("bcryptjs");
 
 /// MIDDLEWARE
 app.set("view engine", "ejs");
@@ -20,6 +21,17 @@ const users = {};
 
 /// *****ROUTES*****
 
+/// HOME
+app.get("/", (req, res) => {
+    const user = users[req.session.user_id];
+
+    if (user) {
+        return res.redirect("/urls");
+    }
+    
+    return res.redirect("/login");
+});
+
 /// REGISTER
 app.get("/register", (req, res) => {
     const user = users[req.session.user_id];
@@ -33,8 +45,7 @@ app.get("/register", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
-    const email = req.body["email"];
-    const password = req.body["password"];
+    const {email, password} = req.body;
 
     if (!email || !password) {
         let templateVars = { message: "email or password is empty" };
