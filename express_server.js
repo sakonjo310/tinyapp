@@ -1,8 +1,8 @@
 /// SETUP
-const cookieSession = require('cookie-session')
+const cookieSession = require('cookie-session');
 const express = require("express");
 const bcrypt = require("bcryptjs");
-
+const methodOverride = require('method-override');
 const app = express();
 const PORT = 8080;
 const { generateRandomString, addUser, getUserByEmail, getUserByPass, getUserById, urlsForUser } = require("./helper_functions")
@@ -14,6 +14,7 @@ app.use(cookieSession({
   name: 'session',
   keys: ["Thisisverysecure"],
 }));
+app.use(methodOverride('_method'));
 
 /// DATABASE
 const urlDatabase = {};
@@ -156,7 +157,7 @@ app.get("/urls/:id", (req, res) => {
     return res.render("urls_show", templateVars);
 });
 
-app.post("/urls/:id", (req, res) => {
+app.put("/urls/:id", (req, res) => {
     if (!urlDatabase[req.params.id]) {
         let templateVars = { message: "This URL does not exist" };
         return res.status(404).render("urls_error", templateVars);
@@ -192,7 +193,7 @@ app.get("/u/:id", (req, res) => {
 });
 
 /// URLS/:ID/DELETE
-app.post("/urls/:id/delete", (req, res) => {
+app.delete("/urls/:id", (req, res) => {
     const id = req.params.id;
 
     if (!urlDatabase[id]) {
