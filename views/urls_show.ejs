@@ -23,6 +23,9 @@
                         <%= id %>
                     </a>
                 </p>
+                <p class="card-text">Date of creation: <%= urls[id].dateCreated.toLocaleDateString() %>, <%= urls[id].dateCreated.toLocaleTimeString() %></a></p>
+                <p class="card-text">Number of visits: <%= urls[id].visitCount %></a></p>
+                <p class="card-text">Number of unique visitors: <%= urls[id].uniqueVisitCount %></a></p>
             </div>
 
             <div class="card-footer text-muted">
@@ -34,6 +37,24 @@
                     <button type="submit" class="btn btn-primary">Submit</button>
                 </form>
             </div>
+
+            <h2 style="text-align:center; margin-top:1em;" class="text-secondary">Visits History</h2>
+            <table class="table w-50 align-self-center">
+                <thead class="bg-light">
+                <tr>
+                    <th scope="col">Visitor ID</th>
+                    <th scope="col">Date of visit</th>
+                </tr>
+                </thead>
+                <tbody>
+                <% for(let visit of urls[id].visitHistory) { %>
+                <tr>
+                    <td class="w-25"><%= visit[1] %></td>
+                    <td class="w-25"><%= visit[0].toLocaleDateString() %>, <%= visit[0].toLocaleTimeString() %></td>
+                </tr>
+                <% } %>
+                </tbody>
+            </table>
         </div>
         <!-- Bootstrap JS -->
         <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"

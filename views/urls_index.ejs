@@ -16,11 +16,14 @@
 
         <main style="margin: 1em;">
             <h3>My URLs</h3>
-            <table class="table">
+            <table class="table text-center">
                 <thead>
                     <tr>
                         <th scope="col">Short URL ID</th>
                         <th scope="col">Long URL</th>
+                        <th scope="col">Date Created</th>
+                        <th scope="col">Visits</th>
+                        <th scope="col">Unique Visitors</th>
                         <th scope="col">Edit</th>
                         <th scope="col">Delete</th>
                     </tr>
@@ -33,6 +36,15 @@
                             </td>
                             <td>
                                 <%= urls[id]["longURL"] %>
+                            </td>
+                            <td>
+                                <%= urls[id].dateCreated.toLocaleDateString() %>, <%= urls[id].dateCreated.toLocaleTimeString() %>
+                            </td>
+                            <td style="text-align: center">
+                                <%= urls[id].visitCount %>
+                            </td>
+                            <td style="text-align: center">
+                                <%= urls[id].uniqueVisitCount %>
                             </td>
                             <td>
                                 <a href="/urls/<%= id %>"><button class="btn border border-primary text-primary"

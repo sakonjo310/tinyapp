@@ -5,7 +5,7 @@ const bcrypt = require("bcryptjs");
 const methodOverride = require('method-override');
 const app = express();
 const PORT = 8080;
-const { generateRandomString, addUser, getUserByEmail, getUserByPass, getUserById, urlsForUser } = require("./helper_functions")
+const { generateRandomString, addUser, getUserByEmail, getUserByPass, getUserById, urlsForUser, addURL } = require("./helper_functions")
 
 /// MIDDLEWARE
 app.set("view engine", "ejs");
@@ -115,11 +115,7 @@ app.post("/urls", (req, res) => {
         return res.status(400).render("urls_error", templateVars);
     }
 
-    const newId = generateRandomString();
-    urlDatabase[newId] = { 
-        longURL: req.body["longURL"],
-        userID: req.session.user_id
-     };
+    const newId = addURL(req.body.longURL, req.session.user_id, urlDatabase);
     return res.redirect(`/urls/${newId}`);
 });
 
@@ -141,7 +137,8 @@ app.get("/urls/:id", (req, res) => {
     let templateVars = {
         user: user,
         id: req.params.id, 
-        longURL: urlDatabase[req.params.id]["longURL"]
+        longURL: urlDatabase[req.params.id]["longURL"],
+        urls: urlDatabase
     }
 
     if(!user) {
@@ -174,6 +171,14 @@ app.put("/urls/:id", (req, res) => {
     }
 
     urlDatabase[req.params.id]["longURL"] = req.body["longURL"];
+    const id = req.params.id;
+    const longURL = req.body.longURL;
+    urlDatabase[id].longURL = longURL;
+    urlDatabase[id].visitCount = 0;
+    urlDatabase[id].visitHistory = [];
+    urlDatabase[id].uniqueVisitCount = 0;
+    urlDatabase[id].visitorIDList = [];
+
     return res.redirect("/urls");
 });
 
@@ -181,13 +186,29 @@ app.put("/urls/:id", (req, res) => {
 app.get("/u/:id", (req, res) => {
     const id = req.params.id;
     const longURL = urlDatabase[id]["longURL"];
+    const dateVisited = new Date();
 
-    if(!longURL) {
+    if(!urlDatabase[id]) {
         let templateVars = {
             message: "This short URL does not exist."
         }
         return res.status(404).render("urls_error", templateVars);
     }
+    if (!req.session.user_id) {
+        req.session.user_id = generateRandomString();
+        urlDatabase[id].visitHistory.push([dateVisited, req.session.user_id]);
+        urlDatabase[id].visitCount++;
+        urlDatabase[id].visitorIDList.push(req.session.user_id);
+        urlDatabase[id].uniqueVisitCount++;
+    } else {
+        const visitorId = urlDatabase[id].visitorIDList;
+        urlDatabase[id].visitHistory.push([dateVisited,req.session.user_id]);
+        urlDatabase[id].visitCount++;
+        if (!visitorId.includes(req.session.user_id)) {
+          visitorId.push(req.session.user_id);
+          urlDatabase[id].uniqueVisitCount++;
+        }
+      }
 
     return res.redirect(longURL);
 });

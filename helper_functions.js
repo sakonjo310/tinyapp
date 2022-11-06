@@ -58,6 +58,16 @@ function urlsForUser(database, id) {
     return customObj;
 };
 
+function addURL(longURL, userID, database) {
+    const dateCreated = new Date();
+    const visitCount = 0;
+    const visitHistory = [];
+    const uniqueVisitCount = 0;
+    const visitorIDList = [];
+    const shortURL = generateRandomString();
+    database[shortURL] = { userID, longURL, dateCreated, visitCount, visitHistory, visitorIDList, uniqueVisitCount };
+    return shortURL;
+}
 
 module.exports = {
     generateRandomString,
@@ -65,5 +75,6 @@ module.exports = {
     getUserByEmail,
     getUserByPass,
     getUserById,
-    urlsForUser
+    urlsForUser,
+    addURL
 }
